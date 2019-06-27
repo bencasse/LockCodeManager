@@ -1,5 +1,5 @@
 /**
- *  Copyright 2015 SmartThings
+ *  Copyright 2019 Ben Casse
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -10,10 +10,10 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *  Unlock It When I Arrive
+ *  Lock Code Manager
  *
- *  Author: SmartThings
- *  Date: 2013-02-11
+ *  Author: Ben Casse
+ *  Date: 2019-06-27
  */
 
 definition(
@@ -31,6 +31,7 @@ preferences {
     page(name: "preferencesPage")
     page(name: "addUserCode")
     page(name: "deleteUserCode")
+    page(name: "user")
 }
 
 def preferencesPage() {
@@ -43,8 +44,16 @@ def preferencesPage() {
         if(lock) {
         	state.lockCodes = parseJson(lock.currentValue("lockCodes") ?: "{}") ?: [:]
             section("Manage Users") {
-                href(name: "href", title: "Add a user code", required: false, page: "addUserCode")
-                href(name: "href", title: "Delete a user code", required: false, page: "deleteUserCode")
+                href(name: "href", title: "Add a user code", required: false, description:null, page: "addUserCode")
+                href(name: "href", title: "Delete a user code", required: false, description:null, page: "deleteUserCode")
+            }
+            
+            section("Current Users") {
+                log.trace "${state.lockCodes}"
+                state.lockCodes.each { key, value ->
+                	def hrefParams = [key:key, value:value]
+                	href(name: "href", title: "$value", required: false, params:hrefParams, description:null, page:"user")
+                }
             }
         }
     }
@@ -63,6 +72,18 @@ def deleteUserCode() {
     dynamicPage(name: "deleteUserCode", title: "Delete User Code", install:true) {
     	section("Delete User Code") {
         	input(name: "deleteSlot", type: "enum", title: "Select user to remove", options:state.lockCodes, required: true)
+        }
+    }
+}
+
+def user(params) {
+    dynamicPage(name: "user", title: "Manage User", install:true) {
+    	log.trace "$params"	
+        section("User Name") {
+        	paragraph(name: "userNameParagraph", title: "${params.value}", "")
+        }
+        section("User Slot") {
+        	paragraph(name: "userSlotParagraph", title: "Slot: ${params.key}", "")
         }
     }
 }
